@@ -27,6 +27,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Process;
 import android.provider.Telephony;
+import android.telephony.TelephonyManager;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -35,14 +36,16 @@ import androidx.work.WorkManager;
 
 import com.weebkun.nap_app.MainActivity;
 import com.weebkun.nap_app.R;
-import com.weebkun.nap_app.SmsReceiver;
+import com.weebkun.nap_app.telephony.IncomingCallReceiver;
+import com.weebkun.nap_app.telephony.SmsReceiver;
 
 public class NappingService extends IntentService {
 
     private WorkManager manager;
     private NotificationManagerCompat notificationManager;
     int notificationId = 1;
-    private SmsReceiver receiver;
+    private SmsReceiver smsReceiver;
+    private IncomingCallReceiver callReceiver;
 
     @SuppressLint("StaticFieldLeak")
     public static Service service;
@@ -67,9 +70,14 @@ public class NappingService extends IntentService {
         thread.start();
 
         // register sms receiver
-        receiver = new SmsReceiver();
+        smsReceiver = new SmsReceiver();
         IntentFilter filter = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        registerReceiver(receiver, filter);
+        registerReceiver(smsReceiver, filter);
+
+        //register phone call receiver
+        callReceiver = new IncomingCallReceiver();
+        IntentFilter callIntent = new IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+        registerReceiver(callReceiver, callIntent);
     }
 
     @Override
@@ -101,10 +109,9 @@ public class NappingService extends IntentService {
     @Override
     public void onDestroy() {
         ServiceManager.state = ServiceManager.ServiceState.STOPPED;
-        unregisterReceiver(receiver);
+        unregisterReceiver(smsReceiver);
+        unregisterReceiver(callReceiver);
     }
-
-
 
     @Nullable
     @Override
