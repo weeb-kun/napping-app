@@ -14,11 +14,10 @@
    limitations under the License.
  */
 
-package com.example.nap_app.service;
+package com.weebkun.nap_app.service;
 
 import android.annotation.SuppressLint;
 import android.app.IntentService;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.TaskStackBuilder;
@@ -34,15 +33,16 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.WorkManager;
 
-import com.example.nap_app.MainActivity;
-import com.example.nap_app.R;
-import com.example.nap_app.SmsReceiver;
+import com.weebkun.nap_app.MainActivity;
+import com.weebkun.nap_app.R;
+import com.weebkun.nap_app.SmsReceiver;
 
 public class NappingService extends IntentService {
 
     private WorkManager manager;
     private NotificationManagerCompat notificationManager;
     int notificationId = 1;
+    private SmsReceiver receiver;
 
     @SuppressLint("StaticFieldLeak")
     public static Service service;
@@ -67,8 +67,9 @@ public class NappingService extends IntentService {
         thread.start();
 
         // register sms receiver
+        receiver = new SmsReceiver();
         IntentFilter filter = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        registerReceiver(new SmsReceiver(), filter);
+        registerReceiver(receiver, filter);
     }
 
     @Override
@@ -100,6 +101,7 @@ public class NappingService extends IntentService {
     @Override
     public void onDestroy() {
         ServiceManager.state = ServiceManager.ServiceState.STOPPED;
+        unregisterReceiver(receiver);
     }
 
 

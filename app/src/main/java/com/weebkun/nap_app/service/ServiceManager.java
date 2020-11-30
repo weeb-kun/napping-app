@@ -14,24 +14,26 @@
    limitations under the License.
  */
 
-package com.example.nap_app.service;
+package com.weebkun.nap_app.service;
 
-import android.content.Context;
+public class ServiceManager {
 
-import androidx.annotation.NonNull;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
+    /**
+     * variable indicating whether {@code NotificationService} is running or not.
+            */
+    public static ServiceState state = ServiceState.STOPPED;
 
-public class NotifyWorker extends Worker {
+    /**
+     * enum representing the state of the service.
+     */
+    public enum ServiceState {
+        RUNNING(true),
+        STOPPED(false);
 
-    public NotifyWorker(Context context, WorkerParameters params) {
-        super(context, params);
-    }
+        public boolean booleanState;
 
-    @NonNull
-    @Override
-    // todo implement notifying logic
-    public Result doWork() {
-        return null;
+        ServiceState(boolean state){
+            this.booleanState = state;
+        }
     }
 }

@@ -14,10 +14,8 @@
    limitations under the License.
  */
 
-package com.example.nap_app;
+package com.weebkun.nap_app;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
@@ -33,12 +31,11 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.nap_app.service.NappingService;
-import com.example.nap_app.service.ServiceManager;
+import com.weebkun.nap_app.service.NappingService;
+import com.weebkun.nap_app.service.ServiceManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 

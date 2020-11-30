@@ -1,4 +1,4 @@
-package com.example.nap_app;
+package com.weebkun.nap_app;
 
 import org.junit.Test;
 
