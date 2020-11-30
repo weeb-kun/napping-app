@@ -20,7 +20,7 @@ public class ServiceManager {
 
     /**
      * variable indicating whether {@code NotificationService} is running or not.
-     */
+            */
     public static ServiceState state = ServiceState.STOPPED;
 
     /**

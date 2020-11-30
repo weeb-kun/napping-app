@@ -18,6 +18,7 @@ package com.example.nap_app;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -30,10 +31,13 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.nap_app.service.NappingService;
 import com.example.nap_app.service.ServiceManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -43,28 +47,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         int notificationId = 1;
+        String[] permissions = {Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS};
+        List<String> notGrantedList = new ArrayList<>();
 
         // check for permissions
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_DENIED
-        ){
-            // 1 or more permissions got denied.
-            // request permissions
-            ActivityResultLauncher<String[]> requestPermissions = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), granted -> {
-                boolean allGranted = true;
-                for(Map.Entry<String, Boolean> entry : granted.entrySet()) {
-                    if(entry.getValue()) {
-                        continue;
-                    } else {
-                        allGranted = false;
-                    }
-                }
-                if(allGranted){
-                    setContentView(R.layout.activity_main);
-                }
-            });
-            requestPermissions.launch(new String[]{Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS});
+        for(String permission : permissions) {
+            if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) notGrantedList.add(permission);
+        }
+
+        //request not granted permissions
+        if(notGrantedList.size() > 0) {
+            this.requestPermissions(notGrantedList.toArray(new String[]{}), 69);
+        } else {
+            //all permissions granted
+            this.setContentView(R.layout.activity_main);
         }
 
         //create notification channel
@@ -74,26 +70,45 @@ public class MainActivity extends AppCompatActivity {
             manager.createNotificationChannel(channel);
         }
 
-        Button napButton = findViewById(R.id.button);
+        Button napButton = this.findViewById(R.id.button);
         Intent intent = new Intent(this, NappingService.class);
 
-        // get notification manager
-        NotificationManagerCompat manager = NotificationManagerCompat.from(NappingService.service);
-
         // check if service is still running
-        if(ServiceManager.state.booleanState){
-            //service running
-            napButton.setText("Wake up");
-            napButton.setOnClickListener(v -> {
-                //stop service
-                stopService(intent);
-                manager.cancel(notificationId);
-            });
-        } else {
+        if(!ServiceManager.state.booleanState){
             napButton.setOnClickListener(v -> {
                 // start napping service
                 startService(intent);
             });
+        } else {
+            //service running
+            napButton.setText("Wake up");
+            napButton.setOnClickListener(v -> {
+                NotificationManagerCompat manager = NotificationManagerCompat.from(NappingService.service);
+                //stop service
+                stopService(intent);
+                manager.cancel(notificationId);
+            });
         }
+    }
+
+    /**
+     * check the results of the permission request.
+     * @param requestCode the request code
+     * @param permissions the list of permissions
+     * @param grantResults the results of request
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        StringBuilder toastMsg = new StringBuilder();
+        if(requestCode == 69){
+            for(int i = 0; i < permissions.length; i++) {
+                if(grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    toastMsg.append("Error: permission " + permissions[i] + " not granted.\n");
+                }
+            }
+            Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+        }
+        this.setContentView(R.layout.activity_main);
     }
 }

@@ -17,13 +17,17 @@
 package com.example.nap_app.service;
 
 import android.annotation.SuppressLint;
+import android.app.IntentService;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Process;
+import android.provider.Telephony;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -32,29 +36,39 @@ import androidx.work.WorkManager;
 
 import com.example.nap_app.MainActivity;
 import com.example.nap_app.R;
+import com.example.nap_app.SmsReceiver;
 
-public class NappingService extends Service {
+public class NappingService extends IntentService {
 
     private WorkManager manager;
+    private NotificationManagerCompat notificationManager;
     int notificationId = 1;
 
     @SuppressLint("StaticFieldLeak")
     public static Service service;
 
-    public NappingService(){}
+    public NappingService(){
+        super("napping");
+    }
 
     public NappingService(WorkManager manager) {
+        super("napping");
         this.manager = manager;
+        this.notificationManager = NotificationManagerCompat.from(this);
     }
 
     /**
-     * fired when this service is started.
+     * called when this service is started.
      */
     @Override
     public void onCreate() {
         ServiceManager.state = ServiceManager.ServiceState.RUNNING;
         HandlerThread thread = new HandlerThread("nappingService", Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
+
+        // register sms receiver
+        IntentFilter filter = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        registerReceiver(new SmsReceiver(), filter);
     }
 
     @Override
@@ -80,7 +94,7 @@ public class NappingService extends Service {
 
         // show the notification
         manager.notify(notificationId, builder.build());
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
 
     @Override
@@ -88,9 +102,20 @@ public class NappingService extends Service {
         ServiceManager.state = ServiceManager.ServiceState.STOPPED;
     }
 
+
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("cannot be bound.");
+    }
+
+    @Override
+    protected void onHandleIntent(@Nullable Intent intent) {
+
+    }
+
+    public NotificationManagerCompat getNotificationManager(){
+        return this.notificationManager;
     }
 }
